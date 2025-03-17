@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tic Tac Toe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      background-color: #282c34;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      width: 90vw;
+      max-width: 400px;
+      aspect-ratio: 1;
+      margin: 20px 0;
+    }
+    .cell {
+      background-color: white;
+      font-size: calc(10vw); /* Dynamically adjust font size */
+      max-font-size: 50px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      color: black;
+      height: 100%;
+      aspect-ratio: 1; /* Keeps cells square */
+    }
+    #scoreBoard, #turnIndicator, #winnerDisplay, #roundDisplay {
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: calc(2.5vw); /* Dynamically adjust button size */
+      background-color: white;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: lightgray;
+    }
+  </style>
+</head>
+<body>
+<h1>Tic Tac Toe</h1>
+<div id="roundDisplay">Round: <span id="currentRound">1</span>/3</div>
+<div id="turnIndicator">Player Turn: <span id="currentPlayer">X</span></div>
+<div id="scoreBoard">
+  Player X: <span id="scoreX">0</span> | Player O: <span id="scoreO">0</span> | Rounds Played: <span id="round">0</span>
+</div>
+<div id="gameBoard"></div>
+<div id="winnerDisplay"></div>
+<div>
+  <button id="nextRound" style="display:none;">Next Round</button>
+  <button id="restartGame">Restart Game</button>
+</div>
+
+<script>
+const gameBoard = document.getElementById('gameBoard');
+const scoreX = document.getElementById('scoreX');
+const scoreO = document.getElementById('scoreO');
+const roundCounter = document.getElementById('round');
+const turnIndicator = document.getElementById('currentPlayer');
+const winnerDisplay = document.getElementById('winnerDisplay');
+const roundDisplay = document.getElementById('currentRound');
+const nextRoundButton = document.getElementById('nextRound');
+const restartGameButton = document.getElementById('restartGame');
+
+let board = ["", "", "", "", "", "", "", "", ""];
+let currentPlayer = "X";
+let isGameActive = true;
+let scores = { X: 0, O: 0 };
+let roundsPlayed = 0;
+
+// Winning combinations
+const winningCombinations = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6]
+];
+
+// Initialize board
+function createBoard() {
+  gameBoard.innerHTML = "";
+  winnerDisplay.textContent = ""; // Clear previous winner message
+  board.forEach((cell, index) => {
+    const cellDiv = document.createElement("div");
+    cellDiv.classList.add("cell");
+    cellDiv.dataset.index = index;
+    cellDiv.addEventListener("click", handleCellClick);
+    gameBoard.appendChild(cellDiv);
+  });
+}
+
+// Handle cell click
+function handleCellClick(event) {
+  const index = event.target.dataset.index;
+  if (board[index] !== "" || !isGameActive) return;
+
+  board[index] = currentPlayer;
+  event.target.textContent = currentPlayer;
+
+  if (checkWinner()) {
+    winnerDisplay.textContent = `Player ${currentPlayer} wins this round!`;
+    scores[currentPlayer]++;
+    updateScores();
+    if (scores[currentPlayer] === 2) {
+      winnerDisplay.textContent = `Player ${currentPlayer} wins the game!`;
+      endGame();
+      return;
+    }
+    isGameActive = false;
+    nextRoundButton.style.display = "block";
+    return;
+  }
+
+  if (board.every(cell => cell !== "")) {
+    winnerDisplay.textContent = "It's a draw!";
+    isGameActive = false;
+    nextRoundButton.style.display = "block";
+    return;
+  }
+
+  currentPlayer = currentPlayer === "X" ? "O" : "X";
+  turnIndicator.textContent = currentPlayer; // Update player turn display
+}
+
+// Check for a winner
+function checkWinner() {
+  return winningCombinations.some(combination => {
+    return combination.every(index => board[index] === currentPlayer);
+  });
+}
+
+// Update scores and round display
+function updateScores() {
+  scoreX.textContent = scores.X;
+  scoreO.textContent = scores.O;
+  roundCounter.textContent = roundsPlayed;
+  roundDisplay.textContent = roundsPlayed + 1; // Update current round display
+}
+
+// Start next round
+nextRoundButton.addEventListener("click", () => {
+  roundsPlayed++;
+  if (roundsPlayed === 3 && scores.X < 2 && scores.O < 2) {
+    winnerDisplay.textContent = "Game Over! No overall winner.";
+    endGame();
+    return;
+  }
+  board = ["", "", "", "", "", "", "", "", ""];
+  currentPlayer = "X";
+  turnIndicator.textContent = currentPlayer; // Reset player turn display
+  isGameActive = true;
+  nextRoundButton.style.display = "none";
+  createBoard();
+  updateScores();
+});
+
+// Restart game
+restartGameButton.addEventListener("click", () => {
+  board = ["", "", "", "", "", "", "", "", ""];
+  currentPlayer = "X";
+  turnIndicator.textContent = currentPlayer; // Reset player turn display
+  isGameActive = true;
+  scores = { X: 0, O: 0 };
+  roundsPlayed = 0;
+  updateScores();
+  nextRoundButton.style.display = "none";
+  createBoard();
+});
+
+// End game
+function endGame() {
+  board = ["", "", "", "", "", "", "", "", ""];
+  isGameActive = false;
+  nextRoundButton.style.display = "none";
+}
+
+createBoard();
+updateScores();
+</script>
+</body>
+</html>
+
+
